@@ -1,0 +1,57 @@
+{
+  "family": "cloudsentinel",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleArn": "arn:aws:iam::ACCOUNT:role/EXECUTION_ROLE",
+  "containerDefinitions": [
+    {
+      "name": "api",
+      "image": "ACCOUNT.dkr.ecr.REGION.amazonaws.com/cloudsentinel@sha256:IMAGE_DIGEST",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8000,
+          "protocol": "tcp"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "API_KEY",
+          "valueFrom": "API_KEY_SECRET_ARN"
+        },
+        {
+          "name": "DATABASE_URL",
+          "valueFrom": "DATABASE_URL_SECRET_ARN"
+        }
+      ],
+      "environment": [
+        {
+          "name": "LLM_ENABLED",
+          "value": "false"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/cloudsentinel",
+          "awslogs-region": "REGION",
+          "awslogs-stream-prefix": "api"
+        }
+      },
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health',timeout=3)\""
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      }
+    }
+  ]
+}
